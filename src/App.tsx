@@ -40,7 +40,36 @@ function hardcodedMetaDataProvider(type: string, imageId: string) {
     };
 
     return imagePixelModule;
-  } else if (type === 'voiLutModule') {
+  }else if (type === 'generalSeriesModule') {
+    const generalSeriesModule = {
+      modality: 'CR',
+      seriesNumber: 1,
+      seriesDescription: 'N/A',
+      seriesDate: '20190201',
+      seriesTime: '120000',
+      seriesInstanceUID: '1.2.276.0.7230010.3.1.4.83233.20190201120000.1',
+    };
+
+    return generalSeriesModule;
+  }else if (type === 'imagePlaneModule') {
+    //const index = imageIds.indexOf(imageId);
+    // console.warn(index);
+    const imagePlaneModule = {
+      imageOrientationPatient: [1, 0, 0, 0, 1, 0],
+      //imagePositionPatient: [0, 0, index * 5],
+      imagePositionPatient: [0, 0, 0],
+      pixelSpacing: [1, 1],
+      columnPixelSpacing: 1,
+      rowPixelSpacing: 1,
+      frameOfReferenceUID: 'FORUID',
+      columns: colums,
+      rows: rows,
+      rowCosines: [1, 0, 0],
+      columnCosines: [0, 1, 0],
+    };
+
+    return imagePlaneModule;
+  }  else if (type === 'voiLutModule') {
     return {
       windowWidth: [65535],
       windowCenter: [65535 / 2],
@@ -58,7 +87,7 @@ function hardcodedMetaDataProvider(type: string, imageId: string) {
 function loadImage(imageId: string): { promise: Promise<IImage> } {
 
   //TODO Parse ImageId to extrack URL
-  const url = "http://localhost:3000/samples/sample_1.aof";
+  const url = "http://localhost:3000/samples/sample_5.aof";
 
   // Create a new Promise
   const promise = new Promise<IImage>((resolve, reject) => {
@@ -88,7 +117,12 @@ function loadImage(imageId: string): { promise: Promise<IImage> } {
             rowPixelSpacing: 140,
             sizeInBytes: 2 * rows * colums,
             width: colums,
-            getPixelData: () => { return oReq.response },
+            getPixelData: () => { 
+              console.log("Get Pixel Data was called ");
+              let targetArray = new Uint16Array(oReq.response);
+              console.log(`PixelData ByteLength ${targetArray.byteLength} length ${targetArray.length}`);
+              return targetArray;
+            },
             getCanvas: () => document.createElement("canvas"),
             voiLUTFunction: Enums.VOILUTFunctionType.LINEAR
           };
@@ -116,6 +150,8 @@ function loadImage(imageId: string): { promise: Promise<IImage> } {
 
 const App: Component = () => {
 
+  //let csDiv: HTMLDivElement = document.getElementById("content") as HTMLDivElement;
+  //let csDiv = document.createElement('div');
   let csDiv: HTMLDivElement;
 
   onMount(async () => {
@@ -130,8 +166,8 @@ const App: Component = () => {
 
     // csDiv.style.width = `${colums}}px`;
     // csDiv.style.height = `${rows}px`;
-    csDiv.style.width = `500px`;
-    csDiv.style.height = `500px`;
+    csDiv.style.width = `800px`;
+    csDiv.style.height = `800px`;
 
     const renderingEngineId = 'myRenderingEngine';
     const renderingEngine = new RenderingEngine(renderingEngineId);
@@ -148,6 +184,10 @@ const App: Component = () => {
 
     const viewport = renderingEngine.getViewport(viewportId) as StackViewport;
     await viewport.setStack(['custom1://example.com/image.dcm']);
+    // await viewport.loadImages(['custom1://example.com/image.dcm'],{
+    //   successCallback: (imageId, image) => {console.log(`Success Callback ${imageId}`);},
+    //   errorCallback: (imageId, permanent, reason) => {console.log(`Error Callback ${imageId}, ${permanent}, ${reason}`);}
+    // });
     viewport.render();
 
 
